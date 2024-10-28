@@ -1,0 +1,10 @@
+#ignore envinroment
+myenv
+
+#ignore config
+config/*.conf
+
+data
+logs
+plugins
+tests
