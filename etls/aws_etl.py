@@ -32,3 +32,16 @@ def upload_to_s3(s3:s3fs.S3FileSystem, file_path:str, bucket:str, s3_file_name:s
         print('File upload to s3')
     except FileNotFoundError as fnf:
         print('file is not found')
+
+def get_from_s3(s3:s3fs.S3FileSystem, file_path):
+    try:
+        import pandas as pd 
+        
+        data = []
+        for file in s3.ls(file_path):
+            temp = pd.read_csv(s3.open('s3://' + file))
+            print(f"length {file}: {len(temp)}")
+            data.append(temp)
+        return pd.concat([*data])
+    except FileNotFoundError as fnf:
+        print('file is not found')
