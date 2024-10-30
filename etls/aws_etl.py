@@ -15,6 +15,7 @@ def connect_to_s3():
         print('connect fail')
         sys.exit(1)
 
+
 def create_bucket_if_not_exists(s3:s3fs.S3FileSystem, bucket:str):
     try:
         if not s3.exists(bucket):

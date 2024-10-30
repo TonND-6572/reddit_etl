@@ -20,6 +20,7 @@ x-airflow-common:
     - ./utils:/opt/airflow/utils
    # - ./airflow.cfg:/opt/airflow/airflow.cfg
     - ./requirements.txt:/opt/airflow/requirements.txt
+    - ./credentials:/home/airflow/.aws/credentials
   depends_on:
     - postgres
     - redis
