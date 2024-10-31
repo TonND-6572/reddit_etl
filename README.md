@@ -1,5 +1,5 @@
 # Data Pipeline with Reddit API, Airflow, Postgres, S3, AWS glue, Athena, Streamlit
-This project provides a comprehensive data pipeline solution to extract, transform, and load (ETL) Reddit data into a Redshift data warehouse. The pipeline leverages a combination of tools and services including Apache Airflow, Celery, PostgreSQL, Amazon S3, AWS Glue and Amazon Athena.
+This project provides a comprehensive data pipeline solution to extract, transform, and load (ETL) Reddit data into a AWS glue datacatalog. The pipeline leverages a combination of tools and services including Apache Airflow, Celery, PostgreSQL, Amazon S3, AWS Glue and Amazon Athena.
 
 ## Table of content
 - [Overview](#overview)
