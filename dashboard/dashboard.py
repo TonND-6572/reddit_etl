@@ -4,104 +4,90 @@ import plotly.express as px
 import altair as alt
 import sys
 import os
-
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from etls.aws_glue_service import get_from_data_catalog, connect_to_botos3, extract_data
 
 st.set_page_config(
-    page_title="Reddit Data engineer session Dashboard",
+    page_title="Reddit Data Engineer Session Dashboard",
     page_icon="🏂",
     layout="wide",
-    initial_sidebar_state="expanded")
-
+    initial_sidebar_state="expanded"
+)
 alt.themes.enable("dark")
 
-
-#data 
+# Data Connection
 client = connect_to_botos3('athena')
 res = get_from_data_catalog(client)
 try:
     df = extract_data(res)
 except Exception as e:
-    pass
+    df = pd.DataFrame()  # Fallback in case of failure
 
-col = st.columns((5, 3), gap='medium')
-
+# Data Transformation and Validation
 def transform_n_validate(df):
-    df['created_utc'] = pd.to_datetime(df['created_utc'])#, '%Y-%m-%d %H:%M:%S')
+    df['created_utc'] = pd.to_datetime(df['created_utc'])
     df['year'] = df['created_utc'].dt.year
     df['month'] = df['created_utc'].dt.month
     df['day'] = df['created_utc'].dt.day
-
     df['score'] = df['score'].astype('int')
     df = df[~(df['url'] == "https://www.bytebase.com/blog/bytebase-3-0/")]
     df.drop_duplicates(['id'], keep='first', inplace=True)
-
     return df
 
-df = transform_n_validate(df)
+if not df.empty:
+    df = transform_n_validate(df)
 
-
+# Sidebar
 with st.sidebar:
-    st.title('🏂 Reddit Data engineer session Dashboard')
-    
-    month_list = list(df['month'].unique())[::-1]
-    month_list.append('All month')
+    st.title('🏂 Reddit Data Engineer Session Dashboard')
+    month_list = sorted(df['month'].unique(), reverse=True) if 'month' in df else []
+    month_list.append('All months')
     selected_month = st.selectbox('Select a month', month_list, index=len(month_list)-1)
-    df_selected_month = df[df['month'] == selected_month] if not (selected_month == 'All month') else df
-    df = df.sort_values(['year', 'month', 'day'], ascending=[False, False, False])
+    df_selected_month = df[df['month'] == selected_month] if selected_month != 'All months' else df
 
+    # Sort by Date
+    df_selected_month = df_selected_month.sort_values(['year', 'month', 'day'], ascending=[False, False, False])
 
-with col[0]:
-    # score vs #comment
-    st.header('Score vs # comment')
-    ### remove outliner
-    df_filter_interval = df[df['score'] < 500]
-    scatter_fig = px.scatter(df_filter_interval, x = 'score', y = 'num_comments', trendline='ols')
-    st.plotly_chart(scatter_fig)
+# Main Dashboard
+col1, col2 = st.columns([2, 1])
 
-    # number of post each day
-    st.header('Number of post each day')
+with col1:
+    st.markdown('#### Score vs. Number of Comments')
+    df_filtered = df_selected_month[df_selected_month['score'] < 500]
+    scatter_fig = px.scatter(df_filtered, x='score', y='num_comments', trendline='ols', height=350)
+    st.plotly_chart(scatter_fig, use_container_width=True)
+
+    st.markdown('#### Post over day')
     cutoff = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    df_daily = df_selected_month[df_selected_month['created_utc'] < cutoff]
+    group_by_date = df_daily.groupby(['year', 'month', 'day']).agg(
+        number_of_posts=('title', 'count')
+    ).reset_index()
+    line_fig = px.line(group_by_date, x='day', y='number_of_posts', height=250)
+    st.plotly_chart(line_fig, use_container_width=True)
 
-    upto_last_date = df[df['created_utc'] < cutoff]
-    group_by_date = upto_last_date.groupby(['year', 'month', 'day']) \
-        .agg(number_of_author=('author', 'count'), number_of_post=('title', 'count'))
-    group_by_date.reset_index(inplace=True)
-    line_fig = px.line(group_by_date, 'day', 'number_of_post')
-    st.plotly_chart(line_fig)
+with col2:
+    # Metrics and Top 5 Listings
+    st.metric(label='Number of Users', value=df['author'].nunique() if not df.empty else 0)
 
-with col[1]:
-    # number of user
-    user_count = df['author'].nunique()
-    st.metric(label='number of user', value=user_count)
+    # Top 5 Posts by Score
+    st.markdown("### Top 5 Posts by Score")
+    st.dataframe(df_selected_month[['title', 'score', 'url']].nlargest(5, 'score'))
 
-    # top 5 post 
-    st.markdown('### Top 5 post score')
-    sort_by_score = df.sort_values(by=['score'], ascending=False)
-    st.dataframe(sort_by_score[['title', 'score'    , 'url']].iloc[:5])
+    # Top 5 Users
+    st.markdown("### Top 5 Users by Posts and Score")
+    group_by_user = df_selected_month.groupby('author').agg(
+        number_of_posts=('title', pd.Series.nunique),
+        average_score=('score', 'mean')
+    ).sort_values(['number_of_posts', 'average_score'], ascending=[False, False]).head(5)
+    st.dataframe(group_by_user)
 
-    # top 5 user 
-    st.markdown('### Top 5 user')
-    
-    group_by_user = df.groupby('author') \
-        .agg(
-            number_of_post = ('title', pd.Series.nunique), 
-            score_mean = ('score', 'mean')
-        ) \
-        .sort_values(['number_of_post', 'score_mean'], ascending=[False, False])
+    # Recent Posts
+    st.markdown("### 5 Most Recent Posts")
+    st.dataframe(df_selected_month[['created_utc', 'title', 'author', 'url']].nlargest(5, 'created_utc'))
 
-    st.dataframe(group_by_user[:5])
-
-    # recent 5 post
-    st.markdown('### Recent 5 post')
-    sort_by_time = df.sort_values('created_utc', ascending=False)
-    
-    st.dataframe(sort_by_time[['created_utc', 'title', 'author', 'url']].iloc[:5])
-
-
-st.markdown('## Explore data')
-st.dataframe(df.sort_values('created_utc', ascending=False).drop(['year', 'month', 'day'], axis=1))
+# Explore Data
+st.markdown('## Explore Data')
+st.dataframe(df_selected_month.sort_values('created_utc', ascending=False).drop(['year', 'month', 'day'], axis=1))
