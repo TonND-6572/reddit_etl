@@ -45,13 +45,13 @@ The pipeline is designed to:
         ```
 4. Install the dependencies
     ```
-    pip install -r requirements.txt
+    pip install -r airflow_requirements.txt
     ```
     **Optional**: you can create additional environment for launch streamlit
     ```
     python3 -m venv streamlit-env python=3.9
     env/Script/activate # or 'source env/bin/activate' if you use Linux/Mac OS
-    pip install -r streamlit_package.txt
+    pip install -r requirements.txt
     ```
 5. Rename the configuration file and the credentials
     ```
