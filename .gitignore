@@ -2,9 +2,12 @@
 myenv
 
 #ignore config
-config/*.conf
+config/*.conf 
+config/credentials
 
+credentials
 data
 logs
 plugins
 tests
+ipynb
