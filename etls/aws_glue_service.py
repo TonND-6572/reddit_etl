@@ -1,21 +1,12 @@
 import sys
 import boto3
-import boto3.session
 import time
 
-import os
 import pandas as pd
-
-aws_access_key_id = os.environ.get('AWS_ACCESS_KEY')
-secret_access_key = os.environ.get('SECRET_ACCESS_KEY')
 
 def connect_to_botos3(client:str) -> boto3.session.Session.client:
     try:
-        connector = boto3.Session(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=secret_access_key,
-        ).client(client) #.resource(client)
-        return connector
+        return boto3.client(client)
     except Exception as e:
         print('Connect failed! Check your client name or aws configure')
         sys.exit(1)

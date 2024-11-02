@@ -66,7 +66,3 @@ The pipeline is designed to:
     ```
     open http://localhost:8080
     ```
-8. Launch Streamlit webapp
-    ```
-    streamlit run dashboard/dashboard.py
-    ```
