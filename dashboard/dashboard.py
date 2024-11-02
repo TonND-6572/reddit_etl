@@ -59,22 +59,27 @@ with col1:
     scatter_fig = px.scatter(df_filtered, x='score', y='num_comments', trendline='ols', height=350)
     st.plotly_chart(scatter_fig, use_container_width=True)
 
-    st.markdown('#### Post over day')
-    cutoff = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    df_daily = df_selected_month[df_selected_month['created_utc'] < cutoff]
-    group_by_date = df_daily.groupby(['year', 'month', 'day']).agg(
-        number_of_posts=('title', 'count')
-    ).reset_index()
-    line_fig = px.line(group_by_date, x='day', y='number_of_posts', height=250)
-    st.plotly_chart(line_fig, use_container_width=True)
+    if selected_month == 'All months':
+        st.markdown('#### Post over month')
+        group_by_month = df.groupby(['year','month']).agg(
+            number_of_posts=('title', 'count')
+        ).reset_index()
+        line_fig = px.line(group_by_month, x='month', y='number_of_posts', height=250)
+        st.plotly_chart(line_fig, use_container_width=True)
+    else:
+        st.markdown('#### Post over day')
+        cutoff = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        df_daily = df_selected_month[df_selected_month['created_utc'] < cutoff]
+        group_by_date = df_daily.groupby(['year', 'month', 'day']).agg(
+            number_of_posts=('title', 'count')
+        ).reset_index()
+        line_fig = px.line(group_by_date, x='day', y='number_of_posts', height=250)
+        line_fig.update_xaxes(dtick=1)
+        st.plotly_chart(line_fig, use_container_width=True)
 
 with col2:
     # Metrics and Top 5 Listings
     st.metric(label='Number of Users', value=df['author'].nunique() if not df.empty else 0)
-
-    # Top 5 Posts by Score
-    st.markdown("### Top 5 Posts by Score")
-    st.dataframe(df_selected_month[['title', 'score', 'url']].nlargest(5, 'score'))
 
     # Top 5 Users
     st.markdown("### Top 5 Users by Posts and Score")
@@ -87,7 +92,12 @@ with col2:
     # Recent Posts
     st.markdown("### 5 Most Recent Posts")
     st.dataframe(df_selected_month[['created_utc', 'title', 'author', 'url']].nlargest(5, 'created_utc'))
+    
+    # Top 5 Posts by Score
+    st.markdown("### Top 5 Posts by Score")
+    st.dataframe(df_selected_month[['title', 'score', 'url']].nlargest(5, 'score'))
 
+    
 # Explore Data
 st.markdown('## Explore Data')
 st.dataframe(df_selected_month.sort_values('created_utc', ascending=False).drop(['year', 'month', 'day'], axis=1))
