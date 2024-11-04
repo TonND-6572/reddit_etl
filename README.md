@@ -17,7 +17,7 @@ The pipeline is designed to:
 5. Show the result into dashboard by Streamlit.
 
 **Dashboard in streamlit**:
-![alt text](assets/dashboard.png)
+![alt text](assets/dashboard1.png)
 ## Architecture
 ![alt text](assets/architecture.png)
 ## Prerequisites
@@ -45,12 +45,6 @@ The pipeline is designed to:
         ```
 4. Install the dependencies
     ```
-    pip install -r airflow_requirements.txt
-    ```
-    **Optional**: you can create additional environment for launch streamlit
-    ```
-    python3 -m venv streamlit-env python=3.9
-    env/Script/activate # or 'source env/bin/activate' if you use Linux/Mac OS
     pip install -r requirements.txt
     ```
 5. Rename the configuration file and the credentials
