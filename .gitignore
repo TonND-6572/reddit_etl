@@ -4,6 +4,7 @@ myenv
 #ignore config
 config/*.conf 
 config/credentials
+.streamlit
 
 credentials
 data
